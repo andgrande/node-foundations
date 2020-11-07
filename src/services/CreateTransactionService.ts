@@ -15,14 +15,18 @@ class CreateTransactionService {
   }
 
   public execute({ title, value, type }: RequestDTO): Transaction {
-    if (type === 'outcome') {
-      const { total } = this.transactionsRepository.getBalance();
+    if (!['income', 'outcome'].includes(type)) {
+      throw Error('Invalid operation');
+    }
 
-      const requestedOutcomeAmount = total - value;
+    if (value < 1) {
+      throw Error('The minimum amount for a transaction is $1');
+    }
 
-      if (requestedOutcomeAmount <= 0) {
-        throw Error('No sufficient balance');
-      }
+    const { total } = this.transactionsRepository.getBalance();
+
+    if (type === 'outcome' && total < value) {
+      throw Error('Not enough balance');
     }
 
     const createdTransaction = this.transactionsRepository.create({
